@@ -342,26 +342,17 @@
                     </div>
                 </div>
 
-               <!-- Monthly Attendance Calendar Grid -->
-<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-        <h3 class="text-xs font-bold text-[#04356F]" id="calendar_month_title">Monthly Attendance Calendar</h3>
-        <div class="flex items-center space-x-1.5 text-[10px] flex-wrap gap-y-1">
-            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">P (Present)</span>
-            <span class="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">OD (On Duty)</span>
-            <span class="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">L (Leave)</span>
-            <span class="inline-flex items-center gap-1 font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">A (Absent)</span>
-        </div>
-    </div>
-
-    <!-- Days Header -->
-    <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-1">
-        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-    </div>
-    <div id="monthlyCalendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs font-mono">
-        <div class="py-4 text-center text-slate-400 col-span-7 font-sans text-xs">Generating calendar...</div>
-    </div>
-</div>
+                <!-- Monthly Attendance Calendar Grid -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h3 class="text-xs font-bold text-[#04356F]" id="calendar_month_title">Monthly Attendance Calendar</h3>
+                        <div class="flex items-center space-x-1.5 text-[10px] flex-wrap gap-y-1">
+                            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">P (Present)</span>
+                            <span class="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">OD (On Duty)</span>
+                            <span class="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">L (Leave)</span>
+                            <span class="inline-flex items-center gap-1 font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">A (Absent)</span>
+                        </div>
+                    </div>
 
                     <!-- Days Header -->
                     <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-1">
@@ -536,20 +527,20 @@
         </main>
 
         <!-- Bottom Navigation Bar -->
-        <nav id="bottom_nav" class="bg-white border-t border-slate-200 px-4 py-2 flex justify-around items-center sticky bottom-0 z-30 shadow-lg hidden">
-            <button onclick="switchTab('dashboard')" id="nav_dash" class="flex flex-col items-center text-[#04356F] space-y-0.5">
+        <nav id="bottom_nav" class="bg-white border-t border-slate-200 px-3 py-2 grid grid-cols-4 sticky bottom-0 z-30 shadow-lg hidden">
+            <button onclick="switchTab('dashboard')" id="nav_dash" class="flex flex-col items-center justify-center text-[#04356F] space-y-0.5">
                 <i data-lucide="home" class="w-4 h-4"></i>
                 <span class="text-[10px] font-bold">Home</span>
             </button>
-            <button onclick="switchTab('attendance')" id="nav_att" class="flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5">
+            <button onclick="switchTab('attendance')" id="nav_att" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-700 space-y-0.5">
                 <i data-lucide="calendar-check" class="w-4 h-4"></i>
                 <span class="text-[10px] font-medium">Leave/Att</span>
             </button>
-            <button onclick="switchTab('fees')" id="nav_fee" class="flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5">
+            <button onclick="switchTab('fees')" id="nav_fee" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-700 space-y-0.5">
                 <i data-lucide="receipt" class="w-4 h-4"></i>
                 <span class="text-[10px] font-medium">Fee Desk</span>
             </button>
-            <button onclick="switchTab('materials')" id="nav_mat" class="flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5">
+            <button onclick="switchTab('materials')" id="nav_mat" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-700 space-y-0.5">
                 <i data-lucide="book-open" class="w-4 h-4"></i>
                 <span class="text-[10px] font-medium">Materials</span>
             </button>
@@ -679,14 +670,25 @@
 
         function switchTab(tab) {
             ['dashboard', 'attendance', 'fees', 'materials'].forEach(t => {
-                document.getElementById(`view_${t}`).classList.add('hidden');
+                const el = document.getElementById(`view_${t}`);
+                if (el) el.classList.add('hidden');
                 const btn = document.getElementById(`nav_${t === 'dashboard' ? 'dash' : t === 'attendance' ? 'att' : t === 'fees' ? 'fee' : 'mat'}`);
-                if (btn) btn.className = 'flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5';
+                if (btn) {
+                    btn.className = 'flex flex-col items-center justify-center text-slate-400 hover:text-slate-700 space-y-0.5';
+                    const span = btn.querySelector('span');
+                    if (span) span.className = 'text-[10px] font-medium';
+                }
             });
 
-            document.getElementById(`view_${tab}`).classList.remove('hidden');
+            const activeEl = document.getElementById(`view_${tab}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+
             const activeBtn = document.getElementById(`nav_${tab === 'dashboard' ? 'dash' : tab === 'attendance' ? 'att' : tab === 'fees' ? 'fee' : 'mat'}`);
-            if (activeBtn) activeBtn.className = 'flex flex-col items-center text-[#04356F] font-bold space-y-0.5';
+            if (activeBtn) {
+                activeBtn.className = 'flex flex-col items-center justify-center text-[#04356F] font-bold space-y-0.5';
+                const span = activeBtn.querySelector('span');
+                if (span) span.className = 'text-[10px] font-bold';
+            }
             lucide.createIcons();
         }
 
@@ -928,81 +930,78 @@
         }
 
         function renderAttendanceCalendar(logs) {
-    const grid = document.getElementById('monthlyCalendarGrid');
-    if (!grid) return;
+            const grid = document.getElementById('monthlyCalendarGrid');
+            if (!grid) return;
 
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
 
-    const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-    
-    const titleEl = document.getElementById('calendar_month_title');
-    if (titleEl) {
-        titleEl.textContent = `${monthNames[month]} ${year} Attendance`;
-    }
-
-    const firstDayIndex = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-    let cells = '';
-
-    // Empty cells before start of month
-    for (let i = 0; i < firstDayIndex; i++) {
-        cells += `<div class="py-2"></div>`;
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const log = logs.find(l => l.date === dateStr);
-        const dayOfWeek = new Date(year, month, day).getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-        const isPastOrToday = dateStr <= todayStr;
-
-        let bgClass = 'bg-slate-50 text-slate-700 border border-slate-200/80';
-        let statusTag = '';
-
-        if (log) {
-            const statusUpper = (log.status || '').toUpperCase();
-            if (statusUpper === 'PRESENT') {
-                bgClass = 'bg-emerald-500 text-white font-bold shadow-sm';
-                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">P</span>';
-            } else if (statusUpper === 'ON_DUTY') {
-                bgClass = 'bg-indigo-600 text-white font-bold shadow-sm';
-                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">OD</span>';
-            } else if (statusUpper === 'LEAVE') {
-                bgClass = 'bg-amber-500 text-white font-bold shadow-sm';
-                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">L</span>';
-            } else if (statusUpper === 'ABSENT') {
-                bgClass = 'bg-rose-500 text-white font-bold shadow-sm';
-                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">A</span>';
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            
+            const titleEl = document.getElementById('calendar_month_title');
+            if (titleEl) {
+                titleEl.textContent = `${monthNames[month]} ${year} Attendance`;
             }
-        } else if (isWeekend) {
-            bgClass = 'bg-slate-100 text-slate-400 border border-slate-200/50';
-            statusTag = '<span class="text-[8px] font-medium text-slate-400">OFF</span>';
-        } else if (isPastOrToday && dateStr < todayStr) {
-            // Past day with no punch record
-            bgClass = 'bg-rose-50 text-rose-700 border border-rose-200';
-            statusTag = '<span class="text-[9px] font-black text-rose-600">A</span>';
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            let cells = '';
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                cells += `<div class="py-2"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const log = logs.find(l => l.date === dateStr);
+                const dayOfWeek = new Date(year, month, day).getDay();
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const isPastOrToday = dateStr <= todayStr;
+
+                let bgClass = 'bg-slate-50 text-slate-700 border border-slate-200/80';
+                let statusTag = '';
+
+                if (log) {
+                    const statusUpper = (log.status || '').toUpperCase();
+                    if (statusUpper === 'PRESENT') {
+                        bgClass = 'bg-emerald-500 text-white font-bold shadow-sm';
+                        statusTag = '<span class="text-[9px] font-black uppercase">P</span>';
+                    } else if (statusUpper === 'ON_DUTY') {
+                        bgClass = 'bg-indigo-600 text-white font-bold shadow-sm';
+                        statusTag = '<span class="text-[9px] font-black uppercase">OD</span>';
+                    } else if (statusUpper === 'LEAVE') {
+                        bgClass = 'bg-amber-500 text-white font-bold shadow-sm';
+                        statusTag = '<span class="text-[9px] font-black uppercase">L</span>';
+                    } else if (statusUpper === 'ABSENT') {
+                        bgClass = 'bg-rose-500 text-white font-bold shadow-sm';
+                        statusTag = '<span class="text-[9px] font-black uppercase">A</span>';
+                    }
+                } else if (isWeekend) {
+                    bgClass = 'bg-slate-100 text-slate-400 border border-slate-200/50';
+                    statusTag = '<span class="text-[8px] font-medium text-slate-400">OFF</span>';
+                } else if (isPastOrToday && dateStr < todayStr) {
+                    bgClass = 'bg-rose-50 text-rose-700 border border-rose-200';
+                    statusTag = '<span class="text-[9px] font-black text-rose-600">A</span>';
+                }
+
+                const todayBorder = (dateStr === todayStr) ? 'ring-2 ring-[#04356F]' : '';
+
+                cells += `
+                    <div class="py-1 px-0.5 rounded-xl flex flex-col items-center justify-center min-h-[44px] ${bgClass} ${todayBorder} transition">
+                        <span class="text-xs leading-none">${day}</span>
+                        <div class="mt-0.5">${statusTag}</div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = cells;
         }
-
-        // Highlight today's date border
-        const todayBorder = (dateStr === todayStr) ? 'ring-2 ring-[#04356F]' : '';
-
-        cells += `
-            <div class="py-1 px-0.5 rounded-xl flex flex-col items-center justify-center min-h-[46px] ${bgClass} ${todayBorder} transition">
-                <span class="text-xs leading-none">${day}</span>
-                <div class="mt-0.5">${statusTag}</div>
-            </div>
-        `;
-    }
-
-    grid.innerHTML = cells;
-}
 
         function renderPunchLogsList(logs) {
             const list = document.getElementById('dash_punch_logs_list');
