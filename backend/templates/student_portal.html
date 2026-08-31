@@ -233,7 +233,7 @@
                 </form>
             </div>
 
-            <!-- 2. DASHBOARD VIEW -->
+            <!-- 2. DASHBOARD VIEW (TAB: HOME) -->
             <div id="view_dashboard" class="hidden space-y-4">
 
                 <!-- 2A. Birthday Wish Banner -->
@@ -323,7 +323,7 @@
                 </div>
             </div>
 
-            <!-- 3. ATTENDANCE, CALENDAR, LEAVE & REGULARISATION VIEW -->
+            <!-- 3. ATTENDANCE & LEAVE VIEW (TAB: LEAVE/ATT) -->
             <div id="view_attendance" class="hidden space-y-4">
                 
                 <!-- Attendance Metrics Breakdown -->
@@ -342,23 +342,39 @@
                     </div>
                 </div>
 
-                <!-- Monthly Attendance Calendar Grid -->
+                <!-- Monthly Attendance Calendar Grid with Month Switcher -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h3 class="text-xs font-bold text-[#04356F]" id="calendar_month_title">Monthly Attendance Calendar</h3>
-                        <div class="flex items-center space-x-1.5 text-[10px] flex-wrap gap-y-1">
-                            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">P (Present)</span>
-                            <span class="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">OD (On Duty)</span>
-                            <span class="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">L (Leave)</span>
-                            <span class="inline-flex items-center gap-1 font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">A (Absent)</span>
-                        </div>
+                    
+                    <!-- Month Navigation Header -->
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <button type="button" onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 transition flex items-center gap-1 text-xs font-bold">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Prev</span>
+                        </button>
+
+                        <h3 class="text-xs font-bold text-[#04356F] text-center" id="calendar_month_title">Monthly Attendance Calendar</h3>
+
+                        <button type="button" onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 transition flex items-center gap-1 text-xs font-bold">
+                            <span class="hidden sm:inline">Next</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Status Badges Legend -->
+                    <div class="flex items-center space-x-1.5 text-[10px] flex-wrap gap-y-1 justify-center sm:justify-start">
+                        <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">P (Present)</span>
+                        <span class="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">OD (On Duty)</span>
+                        <span class="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">L (Leave)</span>
+                        <span class="inline-flex items-center gap-1 font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">A (Absent)</span>
                     </div>
 
                     <!-- Days Header -->
-                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-1">
+                    <div class="grid grid-cols-7 gap-1.5 text-center font-bold text-[11px] text-slate-400 mb-1.5">
                         <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
                     </div>
-                    <div id="monthlyCalendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs font-mono">
+
+                    <!-- Calendar Grid -->
+                    <div id="monthlyCalendarGrid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
                         <div class="py-4 text-center text-slate-400 col-span-7 font-sans text-xs">Generating calendar...</div>
                     </div>
                 </div>
@@ -437,7 +453,7 @@
                 </div>
             </div>
 
-            <!-- 4. FEE DESK & RECEIPT VIEW -->
+            <!-- 4. FEE DESK & RECEIPT VIEW (TAB: FEE DESK) -->
             <div id="view_fees" class="hidden space-y-4">
                 <!-- Fee Summary Cards -->
                 <div class="grid grid-cols-3 gap-2 text-center">
@@ -514,7 +530,7 @@
                 </div>
             </div>
 
-            <!-- 5. STUDY MATERIALS & PPTs VIEW -->
+            <!-- 5. STUDY MATERIALS & PPTs VIEW (TAB: MATERIALS) -->
             <div id="view_materials" class="hidden space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <h3 class="text-xs font-bold text-[#04356F]">Curriculum Modules & PPTs</h3>
@@ -526,7 +542,7 @@
 
         </main>
 
-        <!-- Bottom Navigation Bar -->
+        <!-- Bottom Navigation Bar (4-Column Grid) -->
         <nav id="bottom_nav" class="bg-white border-t border-slate-200 px-3 py-2 grid grid-cols-4 sticky bottom-0 z-30 shadow-lg hidden">
             <button onclick="switchTab('dashboard')" id="nav_dash" class="flex flex-col items-center justify-center text-[#04356F] space-y-0.5">
                 <i data-lucide="home" class="w-4 h-4"></i>
@@ -555,6 +571,7 @@
     <script>
         let currentStudent = null;
         let studentAttendanceLogs = [];
+        let currentCalendarDate = new Date();
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
@@ -689,6 +706,13 @@
                 const span = activeBtn.querySelector('span');
                 if (span) span.className = 'text-[10px] font-bold';
             }
+            lucide.createIcons();
+        }
+
+        // ================= MONTH NAVIGATION =================
+        function changeCalendarMonth(offset) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+            renderAttendanceCalendar(studentAttendanceLogs);
             lucide.createIcons();
         }
 
@@ -933,9 +957,8 @@
             const grid = document.getElementById('monthlyCalendarGrid');
             if (!grid) return;
 
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
 
             const monthNames = [
                 "January", "February", "March", "April", "May", "June",
@@ -949,12 +972,14 @@
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            const realToday = new Date();
+            const realTodayStr = `${realToday.getFullYear()}-${String(realToday.getMonth() + 1).padStart(2, '0')}-${String(realToday.getDate()).padStart(2, '0')}`;
 
             let cells = '';
 
             for (let i = 0; i < firstDayIndex; i++) {
-                cells += `<div class="py-2"></div>`;
+                cells += `<div class="w-full aspect-square"></div>`;
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
@@ -962,40 +987,41 @@
                 const log = logs.find(l => l.date === dateStr);
                 const dayOfWeek = new Date(year, month, day).getDay();
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                const isPastOrToday = dateStr <= todayStr;
+                const isPastOrToday = dateStr <= realTodayStr;
 
-                let bgClass = 'bg-slate-50 text-slate-700 border border-slate-200/80';
+                let bgClass = 'bg-slate-50 text-slate-700 border border-slate-200';
                 let statusTag = '';
 
                 if (log) {
                     const statusUpper = (log.status || '').toUpperCase();
                     if (statusUpper === 'PRESENT') {
                         bgClass = 'bg-emerald-500 text-white font-bold shadow-sm';
-                        statusTag = '<span class="text-[9px] font-black uppercase">P</span>';
+                        statusTag = '<span class="text-[10px] font-black uppercase tracking-tight leading-none">P</span>';
                     } else if (statusUpper === 'ON_DUTY') {
                         bgClass = 'bg-indigo-600 text-white font-bold shadow-sm';
-                        statusTag = '<span class="text-[9px] font-black uppercase">OD</span>';
+                        statusTag = '<span class="text-[9px] font-black uppercase tracking-tight leading-none">OD</span>';
                     } else if (statusUpper === 'LEAVE') {
                         bgClass = 'bg-amber-500 text-white font-bold shadow-sm';
-                        statusTag = '<span class="text-[9px] font-black uppercase">L</span>';
+                        statusTag = '<span class="text-[10px] font-black uppercase tracking-tight leading-none">L</span>';
                     } else if (statusUpper === 'ABSENT') {
                         bgClass = 'bg-rose-500 text-white font-bold shadow-sm';
-                        statusTag = '<span class="text-[9px] font-black uppercase">A</span>';
+                        statusTag = '<span class="text-[10px] font-black uppercase tracking-tight leading-none">A</span>';
                     }
                 } else if (isWeekend) {
-                    bgClass = 'bg-slate-100 text-slate-400 border border-slate-200/50';
-                    statusTag = '<span class="text-[8px] font-medium text-slate-400">OFF</span>';
-                } else if (isPastOrToday && dateStr < todayStr) {
+                    bgClass = 'bg-slate-100 text-slate-400 border border-slate-200/60';
+                    statusTag = '<span class="text-[8px] font-semibold text-slate-400 leading-none">OFF</span>';
+                } else if (isPastOrToday && dateStr < realTodayStr) {
                     bgClass = 'bg-rose-50 text-rose-700 border border-rose-200';
-                    statusTag = '<span class="text-[9px] font-black text-rose-600">A</span>';
+                    statusTag = '<span class="text-[10px] font-black text-rose-600 leading-none">A</span>';
                 }
 
-                const todayBorder = (dateStr === todayStr) ? 'ring-2 ring-[#04356F]' : '';
+                const isToday = (dateStr === realTodayStr);
+                const todayRing = isToday ? 'ring-2 ring-[#04356F] ring-offset-1 font-extrabold' : '';
 
                 cells += `
-                    <div class="py-1 px-0.5 rounded-xl flex flex-col items-center justify-center min-h-[44px] ${bgClass} ${todayBorder} transition">
-                        <span class="text-xs leading-none">${day}</span>
-                        <div class="mt-0.5">${statusTag}</div>
+                    <div class="w-full aspect-square rounded-xl flex flex-col items-center justify-center p-0.5 ${bgClass} ${todayRing} transition active:scale-95 select-none shadow-xs">
+                        <span class="text-xs font-semibold leading-none">${day}</span>
+                        <div class="mt-1">${statusTag}</div>
                     </div>
                 `;
             }
