@@ -1,0 +1,25 @@
+{
+  "name": "PulsePortal Student Companion",
+  "short_name": "PulsePortal",
+  "start_url": "/student/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#04356F",
+  "theme_color": "#04356F",
+  "orientation": "portrait",
+  "description": "PulsePortal Student Academic & Clinical Companion",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

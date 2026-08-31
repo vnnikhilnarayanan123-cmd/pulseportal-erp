@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulsePortal - Student Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- PWA Installation Meta Tags -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#04356F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PulsePortal">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2966/2966327.png">
+
+    <style>
+        @media print {
+            body * { visibility: hidden !important; }
+            #printableDoc, #printableDoc * { visibility: visible !important; }
+            #printableDoc { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+        }
+        .toast-slide-in {
+            animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes toastIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        miape: {
+                            primary: '#04356F',
+                            teal: '#35B6B4',
+                            cerulean: '#0082A8',
+                            danube: '#6496C8',
+                            light: '#EBF7F7',
+                            surface: '#F6FAFC',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans antialiased flex flex-col justify-between items-center relative">
+
+    <!-- Floating Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-3 z-50 w-full max-w-sm px-4 pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- Mobile Screen Frame -->
+    <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col justify-between border-x border-slate-200">
+
+        <!-- Top Status Bar -->
+        <header class="bg-gradient-to-r from-[#04356F] via-[#0082A8] to-[#35B6B4] text-white p-4 sticky top-0 z-30 shadow-md">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-sm border border-white/30">
+                        <span>P<span class="text-[#35B6B4]">+</span></span>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-black leading-tight" id="header_app_title">PulsePortal</h1>
+                        <p class="text-[10px] text-slate-200 font-medium" id="header_batch_name">Student Academic Companion</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="logoutStudent()" title="Sign Out" id="logoutBtnHeader" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition hidden">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dynamic View Container -->
+        <main class="p-4 flex-1 overflow-y-auto space-y-4 pb-20">
+
+            <!-- 1. AUTH CONTAINER (SIGN IN / REGISTER / FORGOT PASSWORD) -->
+            <div id="view_auth" class="space-y-4 pt-2">
+                <div class="text-center space-y-1">
+                    <div class="w-12 h-12 mx-auto rounded-2xl bg-[#04356F] text-white flex items-center justify-center font-black text-xl shadow-lg border border-white/30">
+                        <span>P<span class="text-[#35B6B4]">+</span></span>
+                    </div>
+                    <h2 class="text-base font-black text-[#04356F] pt-1">PulsePortal Access</h2>
+                    <p class="text-[11px] text-slate-500">Sign in, register, or reset your student account password</p>
+                </div>
+
+                <!-- Auth Mode Switcher -->
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                    <button onclick="toggleAuthMode('login')" id="btn_auth_login" class="w-1/2 py-2 rounded-lg bg-white text-[#04356F] shadow-sm transition">Sign In</button>
+                    <button onclick="toggleAuthMode('register')" id="btn_auth_register" class="w-1/2 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition">New Registration</button>
+                </div>
+
+                <!-- 1A. Login Form -->
+                <form id="studentLoginForm" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Enrollment Number</label>
+                        <input type="text" id="login_enrollment" placeholder="e.g. 2026/DOTT/001" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl uppercase font-mono outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block font-bold text-slate-700">Password</label>
+                            <button type="button" onclick="toggleAuthMode('forgot')" class="text-[11px] text-[#0082A8] hover:underline font-semibold">Forgot Password?</button>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="login_password" placeholder="••••••••" required class="w-full px-3 py-2 pr-9 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            <button type="button" onclick="togglePassVisibility('login_password', 'eye_login')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                                <i id="eye_login" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" id="loginBtn" class="w-full bg-[#04356F] hover:bg-[#0082A8] text-white font-bold py-2.5 rounded-xl transition shadow-md flex items-center justify-center space-x-1.5">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        <span>Sign In</span>
+                    </button>
+                </form>
+
+                <!-- 1B. Registration Form with Access Passcode -->
+                <form id="studentRegisterForm" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 text-xs hidden">
+                    <div class="bg-blue-50 border border-blue-200 p-2.5 rounded-xl text-[11px] text-blue-900">
+                        🔒 <strong>Portal Access:</strong> Please enter the authorization passcode to register your student profile.
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Portal Access Passcode *</label>
+                        <input type="password" id="reg_pilot_passcode" placeholder="Enter access passcode (e.g. PILOT2026)" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Enrollment Number *</label>
+                        <input type="text" id="reg_enrollment" placeholder="e.g. 2026/DOTT/001" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl uppercase font-mono outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">First Name *</label>
+                            <input type="text" id="reg_first_name" placeholder="First Name" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Last Name *</label>
+                            <input type="text" id="reg_last_name" placeholder="Last Name" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Batch Name *</label>
+                        <select id="reg_batch_name" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            <option value="">Loading batches...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Email Address *</label>
+                        <input type="email" id="reg_email" placeholder="student@example.com" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Phone Number *</label>
+                            <input type="tel" id="reg_phone" placeholder="9876543210" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Date of Birth *</label>
+                            <input type="date" id="reg_dob" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Create Password *</label>
+                        <div class="relative">
+                            <input type="password" id="reg_password" minlength="6" placeholder="Min. 6 characters" required class="w-full px-3 py-2 pr-9 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            <button type="button" onclick="togglePassVisibility('reg_password', 'eye_reg')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                                <i id="eye_reg" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="regSubmitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition shadow-md flex items-center justify-center space-x-1.5">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                        <span>Register Profile</span>
+                    </button>
+                </form>
+
+                <!-- 1C. Password Reset Form -->
+                <form id="studentResetPasswordForm" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 text-xs hidden">
+                    <div class="border-b border-slate-200 pb-2 flex justify-between items-center">
+                        <div>
+                            <strong class="text-slate-800 text-xs">Reset Account Password</strong>
+                            <p class="text-[10px] text-slate-500">Verify your enrollment details to set a new password</p>
+                        </div>
+                        <button type="button" onclick="toggleAuthMode('login')" class="text-[10px] text-slate-500 hover:text-slate-800 font-bold underline">Back to Sign In</button>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Enrollment Number *</label>
+                        <input type="text" id="reset_enrollment" placeholder="e.g. 2026/DOTT/001" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl uppercase font-mono outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Registered Email Address *</label>
+                        <input type="email" id="reset_email" placeholder="student@example.com" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Date of Birth (as per records) *</label>
+                        <input type="date" id="reset_dob" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">New Password *</label>
+                        <div class="relative">
+                            <input type="password" id="reset_new_password" minlength="6" placeholder="Enter new password (min. 6 characters)" required class="w-full px-3 py-2 pr-9 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            <button type="button" onclick="togglePassVisibility('reset_new_password', 'eye_reset')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                                <i id="eye_reset" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="resetSubmitBtn" class="w-full bg-[#0082A8] hover:bg-[#04356F] text-white font-bold py-2.5 rounded-xl transition shadow-md flex items-center justify-center space-x-1.5">
+                        <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+                        <span>Reset & Update Password</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- 2. DASHBOARD VIEW -->
+            <div id="view_dashboard" class="hidden space-y-4">
+
+                <!-- 2A. Birthday Wish Banner -->
+                <div id="dash_birthday_banner" class="hidden bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 text-white p-3.5 rounded-2xl shadow-lg border border-white/30 flex items-center space-x-3">
+                    <div class="text-2xl animate-bounce">🎂</div>
+                    <div class="flex-1">
+                        <strong class="text-xs font-black block">Happy Birthday! 🎉</strong>
+                        <p class="text-[10px] text-white/90">Wishing you academic excellence, great health, and clinical success!</p>
+                    </div>
+                </div>
+
+                <!-- 2B. Profile Greeting Card -->
+                <div class="bg-gradient-to-br from-[#04356F] to-[#0082A8] text-white p-4 rounded-2xl shadow-md space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] text-[#35B6B4] font-bold uppercase tracking-wider">Student Profile</span>
+                            <h2 class="text-base font-black" id="dash_student_name">Loading...</h2>
+                            <p class="text-xs text-slate-200 font-mono" id="dash_enrollment_no">--</p>
+                        </div>
+                        <span id="dash_status_badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">Verified</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-white/10 text-center">
+                        <div>
+                            <span class="text-[9px] uppercase font-bold text-slate-300">Course</span>
+                            <p class="text-xs font-bold truncate" id="dash_course_name">DOTT</p>
+                        </div>
+                        <div>
+                            <span class="text-[9px] uppercase font-bold text-slate-300">Attendance</span>
+                            <p class="text-xs font-bold text-emerald-300" id="dash_att_percent">0%</p>
+                        </div>
+                        <div>
+                            <span class="text-[9px] uppercase font-bold text-slate-300">Fee Balance</span>
+                            <p class="text-xs font-bold text-amber-300" id="dash_fee_due">₹0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2C. Daily GPS Punch Desk -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xs font-bold text-[#04356F]">Daily Campus & Hospital Punch Desk</h3>
+                            <p class="text-[10px] text-slate-400" id="dash_today_date">Today</p>
+                        </div>
+                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">900m Geofenced</span>
+                    </div>
+
+                    <!-- Live Today Punch Status -->
+                    <div id="today_punch_status_box" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-slate-500">Today's Check-In:</span>
+                            <strong id="live_checkin_time" class="font-mono text-slate-400 font-normal">Not Punched Today</strong>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-slate-500">Today's Check-Out:</span>
+                            <strong id="live_checkout_time" class="font-mono text-slate-400 font-normal">--</strong>
+                        </div>
+                    </div>
+
+                    <!-- Punch Actions -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="punchAttendance('CLASSROOM')" class="p-3 rounded-xl bg-miape-light border border-[#35B6B4]/30 hover:bg-[#35B6B4]/20 transition text-left space-y-1">
+                            <i data-lucide="building-2" class="w-4 h-4 text-[#0082A8]"></i>
+                            <strong class="block text-xs text-[#04356F]">Theory Punch</strong>
+                            <span class="text-[10px] text-slate-500">Classroom Session</span>
+                        </button>
+                        <button onclick="punchAttendance('CLINICAL')" class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition text-left space-y-1">
+                            <i data-lucide="stethoscope" class="w-4 h-4 text-indigo-700"></i>
+                            <strong class="block text-xs text-indigo-900">Hospital / OT</strong>
+                            <span class="text-[10px] text-slate-500">Clinical Rotation</span>
+                        </button>
+                    </div>
+
+                    <button onclick="punchCheckOut()" id="btn_checkout_action" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-1.5">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Punch Out for Today</span>
+                    </button>
+                </div>
+
+                <!-- 2D. Latest Announcements -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                    <h3 class="text-xs font-bold text-[#04356F]">Active Broadcasts</h3>
+                    <div id="dash_announcements_list" class="space-y-2 text-xs">
+                        <p class="text-slate-400 text-[11px]">No active announcements.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ATTENDANCE, CALENDAR, LEAVE & REGULARISATION VIEW -->
+            <div id="view_attendance" class="hidden space-y-4">
+                
+                <!-- Attendance Metrics Breakdown -->
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[9px] uppercase font-bold text-slate-400">Past 7 Days</span>
+                        <p class="text-sm font-black text-slate-800" id="att_card_7d">0%</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[9px] uppercase font-bold text-slate-400">Past 30 Days</span>
+                        <p class="text-sm font-black text-[#0082A8]" id="att_card_30d">0%</p>
+                    </div>
+                    <div class="bg-miape-light p-3 rounded-2xl border border-[#35B6B4]/30 shadow-sm">
+                        <span class="text-[9px] uppercase font-bold text-[#04356F]">Full Year</span>
+                        <p class="text-sm font-black text-[#04356F]" id="att_card_365d">0%</p>
+                    </div>
+                </div>
+
+                <!-- Monthly Attendance Calendar Grid -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-[#04356F]" id="calendar_month_title">Monthly Attendance Calendar</h3>
+                        <div class="flex items-center space-x-1 text-[10px]">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-slate-500 mr-1.5">P</span>
+                            <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span><span class="text-slate-500 mr-1.5">A</span>
+                            <span class="inline-block w-2 h-2 rounded-full bg-amber-500"></span><span class="text-slate-500">L</span>
+                        </div>
+                    </div>
+
+                    <!-- Days Header -->
+                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-1">
+                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                    </div>
+                    <div id="monthlyCalendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs font-mono">
+                        <div class="py-4 text-center text-slate-400 col-span-7 font-sans text-xs">Generating calendar...</div>
+                    </div>
+                </div>
+
+                <!-- Attendance Regularisation Desk -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-xs font-bold text-[#04356F]">Attendance Regularisation Request</h3>
+                        <p class="text-[10px] text-slate-500">Submit requests for missed punches due to basement duty or signal loss.</p>
+                    </div>
+
+                    <form id="studentRegularisationForm" class="space-y-2.5 text-xs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Missed Date *</label>
+                                <input type="date" id="reg_att_date" required class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Session Type *</label>
+                                <select id="reg_att_session" class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                                    <option value="CLASSROOM">Classroom Theory</option>
+                                    <option value="CLINICAL">Clinical / OT Posting</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Detailed Reason *</label>
+                            <input type="text" id="reg_att_reason" required placeholder="e.g. Mobile GPS failure in basement OT" class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+                        <button type="submit" id="regSubmitActionBtn" class="w-full bg-[#0082A8] hover:bg-[#04356F] text-white font-bold py-2 rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-1.5">
+                            <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                            <span>Submit Regularisation Request</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Submit Leave Application Form -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold text-[#04356F]">Submit Leave Application</h3>
+                    <form id="studentLeaveForm" class="space-y-2.5 text-xs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Start Date *</label>
+                                <input type="date" id="leave_start" required class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">End Date *</label>
+                                <input type="date" id="leave_end" required class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Leave Type *</label>
+                            <select id="leave_type" class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                                <option value="SICK">Medical / Sick Leave</option>
+                                <option value="CASUAL">Casual Leave</option>
+                                <option value="DUTY">Special Duty Exemption</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Reason *</label>
+                            <input type="text" id="leave_reason" required placeholder="State reason..." class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+                        <button type="submit" class="w-full bg-[#04356F] hover:bg-[#0082A8] text-white font-bold py-2 rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-1.5">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                            <span>Submit Leave Application</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Daily Punch Logs History -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <h3 class="text-xs font-bold text-[#04356F]">Daily Punch Logs History</h3>
+                    <div id="dash_punch_logs_list" class="divide-y divide-slate-100 text-xs max-h-56 overflow-y-auto">
+                        <p class="text-slate-400 py-2">Loading attendance logs...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. FEE DESK & RECEIPT VIEW -->
+            <div id="view_fees" class="hidden space-y-4">
+                <!-- Fee Summary Cards -->
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[9px] uppercase font-bold text-slate-400">Total Fee</span>
+                        <p class="text-sm font-black text-slate-800" id="fee_card_total">₹0</p>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 shadow-sm">
+                        <span class="text-[9px] uppercase font-bold text-emerald-600">Paid Amount</span>
+                        <p class="text-sm font-black text-emerald-700" id="fee_card_paid">₹0</p>
+                    </div>
+                    <div class="bg-rose-50 p-3 rounded-2xl border border-rose-200 shadow-sm">
+                        <span class="text-[9px] uppercase font-bold text-rose-600">Fee Due</span>
+                        <p class="text-sm font-black text-rose-700" id="fee_card_due">₹0</p>
+                    </div>
+                </div>
+
+                <!-- Submit Fee Proof Upload Form -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-xs font-bold text-[#04356F]">Submit Fee Payment Proof</h3>
+                        <p class="text-[10px] text-slate-500">Upload bank transfer / UPI receipt for Faculty verification.</p>
+                    </div>
+
+                    <form id="feeSubmissionForm" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Installment Description *</label>
+                            <input type="text" id="fee_installment_name" placeholder="e.g. 1st Year Semester 2 Installment" required class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Amount Paid (₹) *</label>
+                                <input type="number" step="100" id="fee_amount" placeholder="25000" required class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Payment Mode *</label>
+                                <select id="fee_mode" class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                                    <option value="UPI">UPI / QR Code</option>
+                                    <option value="NETBANKING">Net Banking / NEFT</option>
+                                    <option value="CARD">Debit / Credit Card</option>
+                                    <option value="CASH">Cash Deposit</option>
+                                    <option value="CHEQUE">Cheque / Demand Draft</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">UTR / Transaction Ref No. *</label>
+                            <input type="text" id="fee_utr" placeholder="e.g. 624589123847" required class="w-full px-2.5 py-1.5 bg-slate-50 border rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-[#35B6B4]">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Receipt Screenshot Proof (.jpg, .png, .pdf)</label>
+                            <input type="file" id="fee_proof_file" accept="image/*,.pdf" onchange="previewFeeProof(this)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-miape-light file:text-[#04356F] cursor-pointer">
+                            <div id="proofPreviewContainer" class="mt-2 hidden">
+                                <img id="proofPreviewImg" src="" alt="Proof Preview" class="w-24 h-24 object-cover rounded-xl border border-slate-300 shadow-sm">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="feeSubmitBtn" class="w-full bg-[#04356F] hover:bg-[#0082A8] text-white font-bold py-2 rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-1.5">
+                            <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                            <span>Submit for Verification</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Payment Ledger History -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <h3 class="text-xs font-bold text-[#04356F]">Payment Transactions Ledger</h3>
+                    <div id="fee_ledger_list" class="space-y-2 text-xs">
+                        <p class="text-slate-400 py-2">No transactions recorded.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. STUDY MATERIALS & PPTs VIEW -->
+            <div id="view_materials" class="hidden space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <h3 class="text-xs font-bold text-[#04356F]">Curriculum Modules & PPTs</h3>
+                    <div id="student_materials_list" class="space-y-2 text-xs">
+                        <p class="text-slate-400">Loading learning materials...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav id="bottom_nav" class="bg-white border-t border-slate-200 px-4 py-2 flex justify-around items-center sticky bottom-0 z-30 shadow-lg hidden">
+            <button onclick="switchTab('dashboard')" id="nav_dash" class="flex flex-col items-center text-[#04356F] space-y-0.5">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span class="text-[10px] font-bold">Home</span>
+            </button>
+            <button onclick="switchTab('attendance')" id="nav_att" class="flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                <span class="text-[10px] font-medium">Leave/Att</span>
+            </button>
+            <button onclick="switchTab('fees')" id="nav_fee" class="flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5">
+                <i data-lucide="receipt" class="w-4 h-4"></i>
+                <span class="text-[10px] font-medium">Fee Desk</span>
+            </button>
+            <button onclick="switchTab('materials')" id="nav_mat" class="flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                <span class="text-[10px] font-medium">Materials</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- Hidden Printable Receipt Container -->
+    <div id="printableDoc" class="hidden p-8 bg-white font-sans text-slate-900"></div>
+
+    <!-- Logic Engine -->
+    <script>
+        let currentStudent = null;
+        let studentAttendanceLogs = [];
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white';
+            const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info';
+
+            toast.className = `toast-slide-in pointer-events-auto px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold ${bgClass}`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 flex-shrink-0"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.4s ease';
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        function togglePassVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function previewFeeProof(input) {
+            const container = document.getElementById('proofPreviewContainer');
+            const img = document.getElementById('proofPreviewImg');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    container.classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function loadDynamicBatches() {
+            const select = document.getElementById('reg_batch_name');
+            if (!select) return;
+
+            try {
+                const res = await fetch('/api/batches/');
+                const data = await res.json();
+                const batches = Array.isArray(data) ? data : (data.results || []);
+
+                if (batches.length === 0) {
+                    select.innerHTML = '<option value="">No active batches configured in Admin</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">Select your batch...</option>' + 
+                    batches.map(b => `<option value="${b.name}">${b.name} (${b.course_code || b.course_name})</option>`).join('');
+            } catch (err) {
+                console.error('Failed to load dynamic batches:', err);
+            }
+        }
+
+        function toggleAuthMode(mode) {
+            const loginForm = document.getElementById('studentLoginForm');
+            const registerForm = document.getElementById('studentRegisterForm');
+            const resetForm = document.getElementById('studentResetPasswordForm');
+            const btnLogin = document.getElementById('btn_auth_login');
+            const btnRegister = document.getElementById('btn_auth_register');
+
+            if (mode === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                resetForm.classList.add('hidden');
+                btnLogin.className = 'w-1/2 py-2 rounded-lg bg-white text-[#04356F] shadow-sm transition';
+                btnRegister.className = 'w-1/2 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition';
+            } else if (mode === 'register') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                resetForm.classList.add('hidden');
+                btnRegister.className = 'w-1/2 py-2 rounded-lg bg-white text-[#04356F] shadow-sm transition';
+                btnLogin.className = 'w-1/2 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition';
+            } else if (mode === 'forgot') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.add('hidden');
+                resetForm.classList.remove('hidden');
+                btnLogin.className = 'w-1/2 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition';
+                btnRegister.className = 'w-1/2 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition';
+            }
+            lucide.createIcons();
+        }
+
+        function switchTab(tab) {
+            ['dashboard', 'attendance', 'fees', 'materials'].forEach(t => {
+                document.getElementById(`view_${t}`).classList.add('hidden');
+                const btn = document.getElementById(`nav_${t === 'dashboard' ? 'dash' : t === 'attendance' ? 'att' : t === 'fees' ? 'fee' : 'mat'}`);
+                if (btn) btn.className = 'flex flex-col items-center text-slate-400 hover:text-slate-700 space-y-0.5';
+            });
+
+            document.getElementById(`view_${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav_${tab === 'dashboard' ? 'dash' : tab === 'attendance' ? 'att' : tab === 'fees' ? 'fee' : 'mat'}`);
+            if (activeBtn) activeBtn.className = 'flex flex-col items-center text-[#04356F] font-bold space-y-0.5';
+            lucide.createIcons();
+        }
+
+        // 1. REGISTRATION HANDLER
+        document.getElementById('studentRegisterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Creating Profile...</span>';
+
+            const payload = {
+                pilot_passcode: document.getElementById('reg_pilot_passcode').value.trim(),
+                enrollment_no: document.getElementById('reg_enrollment').value.trim().toUpperCase(),
+                first_name: document.getElementById('reg_first_name').value.trim(),
+                last_name: document.getElementById('reg_last_name').value.trim(),
+                email: document.getElementById('reg_email').value.trim(),
+                password: document.getElementById('reg_password').value,
+                phone: document.getElementById('reg_phone').value.trim(),
+                date_of_birth: document.getElementById('reg_dob').value,
+                batch_name: document.getElementById('reg_batch_name').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/students/register/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast('Registration submitted! Awaiting coordinator approval.', 'success');
+                    document.getElementById('studentRegisterForm').reset();
+                    toggleAuthMode('login');
+                    document.getElementById('login_enrollment').value = payload.enrollment_no;
+                } else {
+                    showToast('Registration failed: ' + (data.error?.pilot_passcode || JSON.stringify(data.error || data)), 'error');
+                }
+            } catch (err) {
+                showToast('Connection error: Could not reach the server.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="user-plus" class="w-3.5 h-3.5"></i><span>Register Profile</span>';
+                lucide.createIcons();
+            }
+        });
+
+        // 2. PASSWORD RESET HANDLER
+        document.getElementById('studentResetPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('resetSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Verifying & Updating...</span>';
+
+            const payload = {
+                enrollment: document.getElementById('reset_enrollment').value.trim().toUpperCase(),
+                email: document.getElementById('reset_email').value.trim().toLowerCase(),
+                dob: document.getElementById('reset_dob').value,
+                new_password: document.getElementById('reset_new_password').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/students/reset_password/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast('Password updated! Please sign in.', 'success');
+                    document.getElementById('studentResetPasswordForm').reset();
+                    toggleAuthMode('login');
+                    document.getElementById('login_enrollment').value = payload.enrollment;
+                } else {
+                    showToast(data.error || 'Password reset failed. Verify details.', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error: Could not connect to server.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="key-round" class="w-3.5 h-3.5"></i><span>Reset & Update Password</span>';
+                lucide.createIcons();
+            }
+        });
+
+        // 3. LOGIN HANDLER
+        document.getElementById('studentLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Verifying...</span>';
+
+            const payload = {
+                enrollment: document.getElementById('login_enrollment').value.trim().toUpperCase(),
+                password: document.getElementById('login_password').value.trim(),
+                device_id: localStorage.getItem('miape_device_id') || ''
+            };
+
+            try {
+                const res = await fetch('/api/students/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    currentStudent = data;
+                    localStorage.setItem('miape_student_enrollment', data.enrollment_no);
+                    showToast(`Welcome back, ${data.first_name || 'Student'}!`, 'success');
+                    showStudentDashboard();
+                } else {
+                    showToast(data.error || 'Login failed.', 'error');
+                }
+            } catch (err) { showToast('Network connection failed.', 'error'); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="log-in" class="w-3.5 h-3.5"></i><span>Sign In</span>';
+                lucide.createIcons();
+            }
+        });
+
+        function showStudentDashboard() {
+            document.getElementById('view_auth').classList.add('hidden');
+            document.getElementById('view_dashboard').classList.remove('hidden');
+            document.getElementById('bottom_nav').classList.remove('hidden');
+            document.getElementById('logoutBtnHeader').classList.remove('hidden');
+
+            renderStudentData();
+            fetchStudentAttendanceLogs();
+            switchTab('dashboard');
+        }
+
+        async function reloadStudentProfile() {
+            if (!currentStudent) return;
+            const res = await fetch(`/api/students/find_by_enrollment/?enrollment=${currentStudent.enrollment_no}`);
+            if (res.ok) {
+                currentStudent = await res.json();
+                renderStudentData();
+                fetchStudentAttendanceLogs();
+            }
+        }
+
+        function renderStudentData() {
+            if (!currentStudent) return;
+
+            document.getElementById('dash_student_name').textContent = currentStudent.full_name;
+            document.getElementById('dash_enrollment_no').textContent = currentStudent.enrollment_no;
+            document.getElementById('dash_course_name').textContent = currentStudent.course_name || 'Paramedical';
+            document.getElementById('header_batch_name').textContent = `${currentStudent.batch_name || 'Batch'} | Active`;
+            document.getElementById('dash_att_percent').textContent = `${currentStudent.yearly_attendance ?? 0}%`;
+            document.getElementById('dash_fee_due').textContent = `₹${currentStudent.fee_due ?? 0}`;
+            document.getElementById('dash_today_date').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+            // 1. Birthday Greeting Check
+            const bdayBanner = document.getElementById('dash_birthday_banner');
+            let isBday = currentStudent.is_birthday_today;
+            if (!isBday && currentStudent.date_of_birth) {
+                const today = new Date();
+                const dob = new Date(currentStudent.date_of_birth);
+                if (dob.getDate() === today.getDate() && dob.getMonth() === today.getMonth()) {
+                    isBday = true;
+                }
+            }
+            if (isBday) {
+                bdayBanner.classList.remove('hidden');
+            } else {
+                bdayBanner.classList.add('hidden');
+            }
+
+            // 2. Status Badge
+            const badge = document.getElementById('dash_status_badge');
+            if (currentStudent.is_verified) {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
+                badge.textContent = 'Verified';
+            } else {
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30';
+                badge.textContent = 'Pending Approval';
+            }
+
+            // 3. Attendance Breakdown
+            document.getElementById('att_card_7d').textContent = `${currentStudent.weekly_attendance ?? 0}%`;
+            document.getElementById('att_card_30d').textContent = `${currentStudent.monthly_attendance ?? 0}%`;
+            document.getElementById('att_card_365d').textContent = `${currentStudent.yearly_attendance ?? 0}%`;
+
+            // 4. Fee Summary
+            document.getElementById('fee_card_total').textContent = `₹${currentStudent.total_fee ?? 0}`;
+            document.getElementById('fee_card_paid').textContent = `₹${currentStudent.fee_paid ?? 0}`;
+            document.getElementById('fee_card_due').textContent = `₹${currentStudent.fee_due ?? 0}`;
+
+            renderFeeLedger(currentStudent.fee_payments || []);
+            renderMaterialsList(currentStudent.curriculum_topics || []);
+            renderAnnouncements(currentStudent.announcements || []);
+            lucide.createIcons();
+        }
+
+        // ================= FETCH ATTENDANCE LOGS & CALENDAR =================
+        async function fetchStudentAttendanceLogs() {
+            if (!currentStudent) return;
+            const logBox = document.getElementById('dash_punch_logs_list');
+            logBox.innerHTML = '<p class="text-slate-400 py-2">Loading attendance records...</p>';
+
+            try {
+                const res = await fetch(`/api/attendance/?student=${currentStudent.id}`);
+                const data = await res.json();
+                studentAttendanceLogs = Array.isArray(data) ? data : (data.results || []);
+
+                renderAttendanceCalendar(studentAttendanceLogs);
+                renderPunchLogsList(studentAttendanceLogs);
+                updateLiveTodayPunchStatus(studentAttendanceLogs);
+            } catch (err) {
+                logBox.innerHTML = '<p class="text-rose-500 py-2">Failed to load attendance logs.</p>';
+            }
+        }
+
+        function updateLiveTodayPunchStatus(logs) {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayLog = logs.find(l => l.date === todayStr);
+
+            const inTimeEl = document.getElementById('live_checkin_time');
+            const outTimeEl = document.getElementById('live_checkout_time');
+
+            if (todayLog && todayLog.check_in_time) {
+                inTimeEl.textContent = new Date(todayLog.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ` (${todayLog.location_name || 'Campus'})`;
+                inTimeEl.className = 'font-mono font-bold text-emerald-700';
+            } else {
+                inTimeEl.textContent = 'Not Punched Today';
+                inTimeEl.className = 'font-mono text-slate-400 font-normal';
+            }
+
+            if (todayLog && todayLog.check_out_time) {
+                outTimeEl.textContent = new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                outTimeEl.className = 'font-mono font-bold text-slate-700';
+            } else {
+                outTimeEl.textContent = '--';
+                outTimeEl.className = 'font-mono text-slate-400 font-normal';
+            }
+        }
+
+        function renderAttendanceCalendar(logs) {
+            const grid = document.getElementById('monthlyCalendarGrid');
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar_month_title').textContent = `${monthNames[month]} ${year} Attendance`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            let cells = '';
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                cells += `<div class="py-2 text-slate-200"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const log = logs.find(l => l.date === dateStr);
+
+                let bgClass = 'bg-slate-50 text-slate-500 border border-slate-100';
+
+                if (log) {
+                    if (log.status === 'PRESENT' || log.status === 'ON_DUTY') {
+                        bgClass = 'bg-emerald-500 text-white font-bold shadow-sm';
+                    } else if (log.status === 'ABSENT') {
+                        bgClass = 'bg-rose-500 text-white font-bold';
+                    } else if (log.status === 'LEAVE') {
+                        bgClass = 'bg-amber-500 text-white font-bold';
+                    }
+                } else if (new Date(dateStr) < new Date(now.toISOString().slice(0, 10))) {
+                    const dayOfWeek = new Date(dateStr).getDay();
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        bgClass = 'bg-slate-100 text-slate-400';
+                    }
+                }
+
+                cells += `
+                    <div class="py-1.5 rounded-lg flex flex-col items-center justify-center ${bgClass}">
+                        <span>${day}</span>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = cells;
+        }
+
+        function renderPunchLogsList(logs) {
+            const list = document.getElementById('dash_punch_logs_list');
+            if (!logs || logs.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 py-2">No attendance logs found.</p>';
+                return;
+            }
+
+            list.innerHTML = logs.map(l => `
+                <div class="py-2 flex justify-between items-center text-xs">
+                    <div>
+                        <strong class="text-slate-800 font-mono block text-[11px]">${l.date}</strong>
+                        <span class="text-[10px] text-slate-500">${l.session_type} | ${l.location_name || 'Geofenced'}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${l.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${l.status}</span>
+                        <span class="block text-[10px] text-slate-400 font-mono mt-0.5">${l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ================= REGULARISATION & LEAVE HANDLERS =================
+        document.getElementById('studentRegularisationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentStudent) return;
+
+            const payload = {
+                student: currentStudent.id,
+                attendance_date: document.getElementById('reg_att_date').value,
+                session_type: document.getElementById('reg_att_session').value,
+                reason: document.getElementById('reg_att_reason').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/regularisations/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast('Regularisation request submitted!', 'success');
+                    document.getElementById('studentRegularisationForm').reset();
+                } else {
+                    const err = await res.json();
+                    showToast('Submission error: ' + JSON.stringify(err), 'error');
+                }
+            } catch (err) { showToast('Network connection failed.', 'error'); }
+        });
+
+        document.getElementById('studentLeaveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentStudent) return;
+
+            const payload = {
+                student: currentStudent.id,
+                start_date: document.getElementById('leave_start').value,
+                end_date: document.getElementById('leave_end').value,
+                leave_type: document.getElementById('leave_type').value,
+                reason: document.getElementById('leave_reason').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/leaves/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast('Leave request submitted!', 'success');
+                    document.getElementById('studentLeaveForm').reset();
+                } else {
+                    showToast('Submission failed.', 'error');
+                }
+            } catch (err) { showToast('Network connection failed.', 'error'); }
+        });
+
+        // ================= PUNCH IN & PUNCH OUT =================
+        async function punchAttendance(sessionType) {
+            if (!currentStudent) return;
+            if (!navigator.geolocation) { showToast('Geolocation not supported by device.', 'error'); return; }
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const payload = {
+                    student: currentStudent.id,
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude,
+                    session_type: sessionType
+                };
+
+                try {
+                    const res = await fetch('/api/attendance/check_in/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(`✓ Check-in recorded at ${data.location}!`, 'success');
+                        reloadStudentProfile();
+                    } else {
+                        showToast(data.error || 'Punch-in rejected.', 'error');
+                    }
+                } catch (err) { showToast('Network request failed.', 'error'); }
+            }, () => { showToast('GPS access denied. Enable location permissions.', 'error'); });
+        }
+
+        async function punchCheckOut() {
+            if (!currentStudent) return;
+
+            const payload = {
+                student: currentStudent.id,
+                session_type: 'CLASSROOM'
+            };
+
+            try {
+                const res = await fetch('/api/attendance/check_out/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('✓ Check-out recorded for today!', 'success');
+                    reloadStudentProfile();
+                } else {
+                    showToast(data.error || 'No active check-in found.', 'error');
+                }
+            } catch (err) { showToast('Network request failed.', 'error'); }
+        }
+
+        // ================= FEE DESK & RECEIPTS =================
+        function renderFeeLedger(payments) {
+            const list = document.getElementById('fee_ledger_list');
+            if (!payments || payments.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 py-2">No payment transactions recorded.</p>';
+                return;
+            }
+
+            list.innerHTML = payments.map(p => `
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <strong class="text-slate-800 text-xs">${p.installment_name}</strong>
+                            <p class="text-[10px] text-slate-500 font-mono">UTR: ${p.transaction_ref || '--'} (${p.payment_mode})</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            p.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
+                            p.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+                        }">${p.status}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-200/60">
+                        <span class="font-black text-[#04356F]">₹${p.amount}</span>
+                        <div class="space-x-1">
+                            ${p.proof_url ? `<a href="${p.proof_url}" target="_blank" class="text-[10px] text-[#0082A8] underline font-semibold">View Proof</a>` : ''}
+                            ${p.status === 'APPROVED' ? `
+                                <button onclick="printFeeReceipt('${p.id}')" class="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-0.5 rounded-lg shadow-sm">
+                                    Receipt PDF
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('feeSubmissionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentStudent) return;
+
+            const btn = document.getElementById('feeSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Uploading Proof...</span>';
+
+            const formData = new FormData();
+            formData.append('student', currentStudent.id);
+            formData.append('installment_name', document.getElementById('fee_installment_name').value.trim());
+            formData.append('amount', document.getElementById('fee_amount').value);
+            formData.append('payment_mode', document.getElementById('fee_mode').value);
+            formData.append('transaction_ref', document.getElementById('fee_utr').value.trim());
+
+            const fileInput = document.getElementById('fee_proof_file');
+            if (fileInput.files.length > 0) {
+                formData.append('proof_document', fileInput.files[0]);
+            }
+
+            try {
+                const res = await fetch('/api/fees/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    body: formData
+                });
+                if (res.ok) {
+                    showToast('Fee payment proof submitted!', 'success');
+                    document.getElementById('feeSubmissionForm').reset();
+                    document.getElementById('proofPreviewContainer').classList.add('hidden');
+                    reloadStudentProfile();
+                } else {
+                    const err = await res.json();
+                    showToast('Submission failed: ' + JSON.stringify(err), 'error');
+                }
+            } catch (err) { showToast('Network connection failed.', 'error'); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i><span>Submit for Verification</span>';
+                lucide.createIcons();
+            }
+        });
+
+        function printFeeReceipt(paymentId) {
+            const payment = (currentStudent.fee_payments || []).find(p => String(p.id) === String(paymentId));
+            if (!payment) return;
+
+            const doc = document.getElementById('printableDoc');
+            doc.innerHTML = `
+                <div style="max-width: 700px; margin: 0 auto; border: 2px solid #04356F; padding: 35px; font-family: sans-serif; line-height: 1.5; color: #1e293b; background: #fff;">
+                    <div style="text-align: center; border-bottom: 2px solid #04356F; padding-bottom: 12px; margin-bottom: 20px;">
+                        <h1 style="color: #04356F; font-size: 20px; font-weight: 800; margin: 0;">PULSEPORTAL ACADEMIC OPERATIONS</h1>
+                        <p style="font-size: 11.5px; color: #475569; margin: 3px 0 0 0; font-weight: 600;">Student Academic Companion | Official E-Receipt</p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 15px;">
+                        <div><strong>Receipt No:</strong> ${payment.receipt_no || 'PULSE-REC-2026'}</div>
+                        <div><strong>Date:</strong> ${payment.payment_date || new Date().toLocaleDateString('en-GB')}</div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
+                        <tbody>
+                            <tr style="border: 1px solid #cbd5e1; background: #f8fafc;"><td style="padding: 6px 10px; font-weight: bold; width: 35%;">Student Name</td><td style="padding: 6px 10px;">${currentStudent.full_name}</td></tr>
+                            <tr style="border: 1px solid #cbd5e1;"><td style="padding: 6px 10px; font-weight: bold;">Enrollment No</td><td style="padding: 6px 10px; font-family: monospace; font-weight: bold; color: #04356F;">${currentStudent.enrollment_no}</td></tr>
+                            <tr style="border: 1px solid #cbd5e1; background: #f8fafc;"><td style="padding: 6px 10px; font-weight: bold;">Course & Batch</td><td style="padding: 6px 10px;">${currentStudent.course_name || 'Paramedical'} (${currentStudent.batch_name || 'Batch 1'})</td></tr>
+                            <tr style="border: 1px solid #cbd5e1;"><td style="padding: 6px 10px; font-weight: bold;">Installment Particulars</td><td style="padding: 6px 10px;">${payment.installment_name}</td></tr>
+                            <tr style="border: 1px solid #cbd5e1; background: #f8fafc;"><td style="padding: 6px 10px; font-weight: bold;">Payment Mode / UTR</td><td style="padding: 6px 10px;">${payment.payment_mode} | Ref: ${payment.transaction_ref || '--'}</td></tr>
+                            <tr style="border: 1px solid #cbd5e1; background: #ecfdf5;"><td style="padding: 8px 10px; font-weight: bold; color: #065f46; font-size: 13px;">Amount Paid</td><td style="padding: 8px 10px; font-weight: bold; color: #065f46; font-size: 13px;">₹${payment.amount}</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div style="font-size: 11px; margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 6px;">
+                        <p style="margin: 0;"><strong>Balance Fee Status:</strong></p>
+                        <p style="margin: 2px 0 0 0;">Total Fee: ₹${currentStudent.total_fee} | Fee Paid: ₹${currentStudent.fee_paid} | <strong>Current Balance Due: ₹${currentStudent.fee_due}</strong></p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 11.5px;">
+                        <div><p style="margin: 0; font-weight: bold;">Verified By:</p><p style="margin: 3px 0 0 0; color: #04356F; font-weight: bold;">Accounts & Finance Desk</p><p style="margin: 0; font-size: 10px; color: #64748b;">Academic Operations Central Office</p></div>
+                        <div style="text-align: right;"><p style="margin: 0; font-weight: bold;">Authorised Signatory</p><p style="margin: 0; font-size: 10px; color: #64748b;">Computer Generated E-Receipt</p></div>
+                    </div>
+                </div>
+            `;
+            window.print();
+        }
+
+        function renderMaterialsList(topics) {
+            const list = document.getElementById('student_materials_list');
+            if (!topics || topics.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 text-xs py-4 text-center">No learning materials published for your batch yet.</p>';
+                return;
+            }
+            list.innerHTML = topics.map(t => `
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                    <strong class="text-[#04356F] text-xs block">${t.title}</strong>
+                    <p class="text-[11px] text-slate-500">${t.description || ''}</p>
+                    ${t.ppt_url ? `<a href="${t.ppt_url}" target="_blank" class="inline-block mt-1 text-[11px] text-white bg-[#0082A8] font-bold px-2.5 py-1 rounded-lg">Download File</a>` : '<span class="text-[10px] text-amber-600 font-semibold">🔒 File Locked</span>'}
+                </div>
+            `).join('');
+        }
+
+        function renderAnnouncements(records) {
+            const list = document.getElementById('dash_announcements_list');
+            if (!records || records.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 text-[11px] py-2">No broadcasts published.</p>';
+                return;
+            }
+            list.innerHTML = records.map(a => `
+                <div class="p-2.5 bg-miape-light border border-[#35B6B4]/30 rounded-xl">
+                    <strong class="text-[#04356F] text-xs block">${a.title}</strong>
+                    <p class="text-[11px] text-slate-600">${a.content}</p>
+                </div>
+            `).join('');
+        }
+
+        function logoutStudent() {
+            localStorage.removeItem('miape_student_enrollment');
+            currentStudent = null;
+            document.getElementById('view_dashboard').classList.add('hidden');
+            document.getElementById('view_attendance').classList.add('hidden');
+            document.getElementById('view_fees').classList.add('hidden');
+            document.getElementById('view_materials').classList.add('hidden');
+            document.getElementById('bottom_nav').classList.add('hidden');
+            document.getElementById('logoutBtnHeader').classList.add('hidden');
+            document.getElementById('view_auth').classList.remove('hidden');
+            toggleAuthMode('login');
+            loadDynamicBatches();
+            showToast('Signed out successfully.', 'info');
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(reg => console.log('Service Worker registered:', reg.scope))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+
+        window.onload = async () => {
+            loadDynamicBatches();
+            const savedEnrollment = localStorage.getItem('miape_student_enrollment');
+            if (savedEnrollment) {
+                const res = await fetch(`/api/students/find_by_enrollment/?enrollment=${savedEnrollment}`);
+                if (res.ok) {
+                    currentStudent = await res.json();
+                    showStudentDashboard();
+                }
+            }
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
