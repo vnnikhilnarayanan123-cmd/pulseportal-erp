@@ -984,11 +984,15 @@
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const log = logs.find(l => l.date === dateStr);
+                const log = logs.find(item => {
+                    if (!item || !item.date) return false;
+                    const cleanLogDate = String(item.date).slice(0, 10);
+                    return cleanLogDate === dateStr;
+                });
+
                 const dayOfWeek = new Date(year, month, day).getDay();
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const isPastOrToday = dateStr <= realTodayStr;
-
                 let bgClass = 'bg-slate-50 text-slate-700 border border-slate-200';
                 let statusTag = '';
 
