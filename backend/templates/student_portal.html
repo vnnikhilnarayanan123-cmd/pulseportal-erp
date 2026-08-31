@@ -10,6 +10,7 @@
     <!-- PWA Installation Meta Tags -->
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#04356F">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PulsePortal">
@@ -69,6 +70,11 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
+                    <!-- Quick Reload Button -->
+                    <button onclick="window.location.reload();" title="Refresh Portal" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white active:scale-95 transition flex items-center gap-1">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                    <!-- Sign Out Button -->
                     <button onclick="logoutStudent()" title="Sign Out" id="logoutBtnHeader" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition hidden">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
@@ -1255,7 +1261,7 @@
             showToast('Signed out successfully.', 'info');
         }
 
-        // Register Service Worker
+        // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/static/sw.js')

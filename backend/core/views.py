@@ -398,10 +398,62 @@ class LeaveViewSet(viewsets.ModelViewSet):
         return Response({"status": "success", "message": "Leave request rejected."})
 
 class RegularisationViewSet(viewsets.ModelViewSet):
-    queryset = RegularisationRequest.objects.all().select_related('student', 'reviewed_by')
+    queryset = RegularisationRequest.objects.all().select_related('student', 'reviewed_by').order_by('-created_at')
     serializer_class = RegularisationRequestSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
+
+    @action(detail=True, methods=['post'], url_path='approve_request', permission_classes=[AllowAny], authentication_classes=[])
+    def approve_request(self, request, pk=None):
+        try:
+            reg = self.get_object()
+            reg.status = 'APPROVED'
+            reg.reviewed_at = timezone.now()
+            reg.save()
+
+            # Identify target date & session type from request
+            target_date = getattr(reg, 'attendance_date', None) or getattr(reg, 'date', None)
+            target_session = getattr(reg, 'session_type', 'CLASSROOM')
+            loc = InstituteLocation.objects.first()
+
+            if target_date:
+                record, _ = AttendanceRecord.objects.get_or_create(
+                    student=reg.student,
+                    date=target_date,
+                    session_type=target_session,
+                    defaults={
+                        'status': 'PRESENT',
+                        'check_in_time': timezone.now(),
+                        'location': loc,
+                        'is_geofenced': False
+                    }
+                )
+                record.status = 'PRESENT'
+                if not record.check_in_time:
+                    record.check_in_time = timezone.now()
+                record.is_geofenced = False
+                record.save()
+
+            return Response({
+                "status": "success",
+                "message": f"Regularisation for {reg.student.enrollment_no} approved and marked Present."
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='reject_request', permission_classes=[AllowAny], authentication_classes=[])
+    def reject_request(self, request, pk=None):
+        try:
+            reg = self.get_object()
+            reg.status = 'REJECTED'
+            reg.reviewed_at = timezone.now()
+            reg.save()
+            return Response({
+                "status": "success",
+                "message": f"Regularisation request for {reg.student.enrollment_no} rejected."
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class FeePaymentViewSet(viewsets.ModelViewSet):
     queryset = FeePayment.objects.all().select_related('student', 'student__user', 'student__batch', 'approved_by', 'approved_by__user').order_by('-created_at')
@@ -497,10 +549,37 @@ class CurriculumTopicViewSet(viewsets.ModelViewSet):
         return Response({"status": "success", "is_ppt_unlocked": topic.is_ppt_unlocked})
 
 class AssessmentViewSet(viewsets.ModelViewSet):
-    queryset = AssessmentRecord.objects.all().select_related('student', 'student__user').order_by('-conducted_date')
+    queryset = AssessmentRecord.objects.all().select_related('student', 'student__user').order_by('-conducted_date', '-id')
     serializer_class = AssessmentRecordSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
+
+    def create(self, request, *args, **kwargs):
+        student_id = request.data.get('student')
+        title = request.data.get('title')
+        exam_type = request.data.get('exam_type', 'REVISION')
+        marks_obtained = request.data.get('marks_obtained')
+        max_marks = request.data.get('max_marks', 100)
+
+        if not student_id or not title or marks_obtained is None:
+            return Response({"error": "Student, Title, and Marks Obtained are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            student = StudentProfile.objects.get(id=student_id)
+            assessment = AssessmentRecord.objects.create(
+                student=student,
+                title=title,
+                exam_type=exam_type,
+                marks_obtained=marks_obtained,
+                max_marks=max_marks,
+                conducted_date=timezone.now().date()
+            )
+            serializer = self.get_serializer(assessment, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except StudentProfile.DoesNotExist:
+            return Response({"error": "Student profile not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
     queryset = Announcement.objects.all().order_by('-created_at')
