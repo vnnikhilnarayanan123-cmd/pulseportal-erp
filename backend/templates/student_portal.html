@@ -808,22 +808,33 @@
         });
 
         // 3. LOGIN HANDLER
+        // 3. LOGIN HANDLER
         document.getElementById('studentLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.innerHTML = '<span>Verifying...</span>';
 
+            // Generate device ID if missing
+            let deviceId = localStorage.getItem('miape_device_id');
+            if (!deviceId) {
+                deviceId = 'DEV-' + Math.random().toString(36).substring(2, 15) + '-' + Date.now();
+                localStorage.setItem('miape_device_id', deviceId);
+            }
+
             const payload = {
                 enrollment: document.getElementById('login_enrollment').value.trim().toUpperCase(),
                 password: document.getElementById('login_password').value.trim(),
-                device_id: localStorage.getItem('miape_device_id') || ''
+                device_id: deviceId
             };
 
             try {
                 const res = await fetch('/api/students/login/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-CSRFToken': getCookie('csrftoken') || '' 
+                    },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
@@ -836,14 +847,16 @@
                 } else {
                     showToast(data.error || 'Login failed.', 'error');
                 }
-            } catch (err) { showToast('Network connection failed.', 'error'); }
+            } catch (err) { 
+                console.error('Login Fetch Error:', err);
+                showToast('Network error: Server is waking up or unreachable. Please retry.', 'error'); 
+            }
             finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="log-in" class="w-3.5 h-3.5"></i><span>Sign In</span>';
                 lucide.createIcons();
             }
         });
-
         function showStudentDashboard() {
             document.getElementById('view_auth').classList.add('hidden');
             document.getElementById('view_dashboard').classList.remove('hidden');
