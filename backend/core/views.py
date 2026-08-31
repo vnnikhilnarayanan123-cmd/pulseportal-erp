@@ -388,8 +388,24 @@ class LeaveViewSet(viewsets.ModelViewSet):
         leave = self.get_object()
         leave.status = 'APPROVED'
         leave.save()
-        return Response({"status": "success", "message": "Leave approved successfully."})
 
+        # Mark all dates in the leave duration as LEAVE in AttendanceRecord
+        curr_date = leave.start_date
+        loc = InstituteLocation.objects.first()
+        while curr_date <= leave.end_date:
+            AttendanceRecord.objects.update_or_create(
+                student=leave.student,
+                date=curr_date,
+                session_type='CLASSROOM',
+                defaults={
+                    'status': 'LEAVE',
+                    'location': loc,
+                    'is_geofenced': False
+                }
+            )
+            curr_date += timezone.timedelta(days=1)
+
+        return Response({"status": "success", "message": "Leave approved and attendance calendar updated."})
     @action(detail=True, methods=['post'], permission_classes=[AllowAny], authentication_classes=[])
     def reject_leave(self, request, pk=None):
         leave = self.get_object()

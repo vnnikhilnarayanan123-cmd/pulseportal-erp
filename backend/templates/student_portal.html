@@ -342,16 +342,26 @@
                     </div>
                 </div>
 
-                <!-- Monthly Attendance Calendar Grid -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xs font-bold text-[#04356F]" id="calendar_month_title">Monthly Attendance Calendar</h3>
-                        <div class="flex items-center space-x-1 text-[10px]">
-                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-slate-500 mr-1.5">P</span>
-                            <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span><span class="text-slate-500 mr-1.5">A</span>
-                            <span class="inline-block w-2 h-2 rounded-full bg-amber-500"></span><span class="text-slate-500">L</span>
-                        </div>
-                    </div>
+               <!-- Monthly Attendance Calendar Grid -->
+<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <h3 class="text-xs font-bold text-[#04356F]" id="calendar_month_title">Monthly Attendance Calendar</h3>
+        <div class="flex items-center space-x-1.5 text-[10px] flex-wrap gap-y-1">
+            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">P (Present)</span>
+            <span class="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">OD (On Duty)</span>
+            <span class="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">L (Leave)</span>
+            <span class="inline-flex items-center gap-1 font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">A (Absent)</span>
+        </div>
+    </div>
+
+    <!-- Days Header -->
+    <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-1">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+    </div>
+    <div id="monthlyCalendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs font-mono">
+        <div class="py-4 text-center text-slate-400 col-span-7 font-sans text-xs">Generating calendar...</div>
+    </div>
+</div>
 
                     <!-- Days Header -->
                     <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-1">
@@ -918,53 +928,81 @@
         }
 
         function renderAttendanceCalendar(logs) {
-            const grid = document.getElementById('monthlyCalendarGrid');
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
+    const grid = document.getElementById('monthlyCalendarGrid');
+    if (!grid) return;
 
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('calendar_month_title').textContent = `${monthNames[month]} ${year} Attendance`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
 
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    
+    const titleEl = document.getElementById('calendar_month_title');
+    if (titleEl) {
+        titleEl.textContent = `${monthNames[month]} ${year} Attendance`;
+    }
 
-            let cells = '';
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-            for (let i = 0; i < firstDayIndex; i++) {
-                cells += `<div class="py-2 text-slate-200"></div>`;
+    let cells = '';
+
+    // Empty cells before start of month
+    for (let i = 0; i < firstDayIndex; i++) {
+        cells += `<div class="py-2"></div>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const log = logs.find(l => l.date === dateStr);
+        const dayOfWeek = new Date(year, month, day).getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const isPastOrToday = dateStr <= todayStr;
+
+        let bgClass = 'bg-slate-50 text-slate-700 border border-slate-200/80';
+        let statusTag = '';
+
+        if (log) {
+            const statusUpper = (log.status || '').toUpperCase();
+            if (statusUpper === 'PRESENT') {
+                bgClass = 'bg-emerald-500 text-white font-bold shadow-sm';
+                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">P</span>';
+            } else if (statusUpper === 'ON_DUTY') {
+                bgClass = 'bg-indigo-600 text-white font-bold shadow-sm';
+                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">OD</span>';
+            } else if (statusUpper === 'LEAVE') {
+                bgClass = 'bg-amber-500 text-white font-bold shadow-sm';
+                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">L</span>';
+            } else if (statusUpper === 'ABSENT') {
+                bgClass = 'bg-rose-500 text-white font-bold shadow-sm';
+                statusTag = '<span class="text-[9px] font-black uppercase tracking-tighter">A</span>';
             }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const log = logs.find(l => l.date === dateStr);
-
-                let bgClass = 'bg-slate-50 text-slate-500 border border-slate-100';
-
-                if (log) {
-                    if (log.status === 'PRESENT' || log.status === 'ON_DUTY') {
-                        bgClass = 'bg-emerald-500 text-white font-bold shadow-sm';
-                    } else if (log.status === 'ABSENT') {
-                        bgClass = 'bg-rose-500 text-white font-bold';
-                    } else if (log.status === 'LEAVE') {
-                        bgClass = 'bg-amber-500 text-white font-bold';
-                    }
-                } else if (new Date(dateStr) < new Date(now.toISOString().slice(0, 10))) {
-                    const dayOfWeek = new Date(dateStr).getDay();
-                    if (dayOfWeek === 0 || dayOfWeek === 6) {
-                        bgClass = 'bg-slate-100 text-slate-400';
-                    }
-                }
-
-                cells += `
-                    <div class="py-1.5 rounded-lg flex flex-col items-center justify-center ${bgClass}">
-                        <span>${day}</span>
-                    </div>
-                `;
-            }
-
-            grid.innerHTML = cells;
+        } else if (isWeekend) {
+            bgClass = 'bg-slate-100 text-slate-400 border border-slate-200/50';
+            statusTag = '<span class="text-[8px] font-medium text-slate-400">OFF</span>';
+        } else if (isPastOrToday && dateStr < todayStr) {
+            // Past day with no punch record
+            bgClass = 'bg-rose-50 text-rose-700 border border-rose-200';
+            statusTag = '<span class="text-[9px] font-black text-rose-600">A</span>';
         }
+
+        // Highlight today's date border
+        const todayBorder = (dateStr === todayStr) ? 'ring-2 ring-[#04356F]' : '';
+
+        cells += `
+            <div class="py-1 px-0.5 rounded-xl flex flex-col items-center justify-center min-h-[46px] ${bgClass} ${todayBorder} transition">
+                <span class="text-xs leading-none">${day}</span>
+                <div class="mt-0.5">${statusTag}</div>
+            </div>
+        `;
+    }
+
+    grid.innerHTML = cells;
+}
 
         function renderPunchLogsList(logs) {
             const list = document.getElementById('dash_punch_logs_list');
