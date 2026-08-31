@@ -1692,6 +1692,7 @@ PulsePortal Academic System`;
             await fetch(`/api/leaves/${id}/approve_leave/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') || '' } }); 
             showToast('Leave approved.', 'success');
             fetchLeaves(); 
+            fetchStudents();
         }
         
         async function rejectLeave(id) { 
@@ -1824,6 +1825,7 @@ PulsePortal Academic System`;
                     document.getElementById('marksEntryForm').reset();
                     document.getElementById('m_max').value = '100';
                     fetchAssessments();
+                    fetchStudents();
                 } else {
                     showToast('Marks upload failed: ' + JSON.stringify(data.error || data), 'error');
                 }

@@ -1,6 +1,9 @@
+from decimal import Decimal
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import Q
+
 from .models import (
     Course, InstituteLocation, FacultyProfile, Batch, StudentProfile,
     AttendanceRecord, LeaveRequest, RegularisationRequest,
@@ -66,7 +69,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         return normalized
 
     def validate(self, data):
-        # 1. Pilot Passcode Verification (Restricted to private testing)
+        # 1. Pilot Passcode Verification
         PILOT_KEY = "PILOT2026"
         if data.get('pilot_passcode', '').strip() != PILOT_KEY:
             raise serializers.ValidationError({"pilot_passcode": "Invalid Pilot Access Passcode. Registration is restricted to authorized pilot testers only."})
@@ -74,7 +77,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         # 2. Resolve or dynamically auto-create batch
         batch_name_input = data.get('batch_name', '').strip()
         if not batch_name_input:
-            raise serializers.ValidationError({"batch_name": "Batch name is required (e.g. DOTT June 25, BOTT June 25)."})
+            raise serializers.ValidationError({"batch_name": "Batch name is required."})
 
         batch = Batch.objects.filter(name__iexact=batch_name_input, is_active=True).first()
 
@@ -150,13 +153,18 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AttendanceRecordSerializer(serializers.ModelSerializer):
+    date = serializers.DateField(format='%Y-%m-%d')
     student_name = serializers.SerializerMethodField()
     enrollment_no = serializers.CharField(source='student.enrollment_no', read_only=True)
     location_name = serializers.CharField(source='location.name', read_only=True)
 
     class Meta:
         model = AttendanceRecord
-        fields = ['id', 'student', 'student_name', 'enrollment_no', 'date', 'session_type', 'status', 'check_in_time', 'check_out_time', 'location', 'location_name', 'is_geofenced']
+        fields = [
+            'id', 'student', 'student_name', 'enrollment_no', 'date',
+            'session_type', 'status', 'check_in_time', 'check_out_time',
+            'location', 'location_name', 'is_geofenced'
+        ]
 
     def get_student_name(self, obj):
         if obj.student and obj.student.user:
@@ -250,7 +258,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             'id', 'enrollment_no', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'date_of_birth',
             'batch', 'batch_name', 'course_name', 'batch_owner_name', 'is_verified', 'verification_date',
             'total_fee', 'fee_paid', 'fee_due', 'weekly_attendance', 'monthly_attendance', 'yearly_attendance',
-            'is_birthday_today', 'curriculum_topics', 'assessments', 'announcements', 'fee_payments'
+            'is_birthday_today', 'active_device_id', 'is_device_approved',
+            'curriculum_topics', 'assessments', 'announcements', 'fee_payments'
         ]
 
     def get_full_name(self, obj):
@@ -288,11 +297,10 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         return CurriculumTopicSerializer(topics, many=True, context=self.context).data
 
     def get_assessments(self, obj):
-        records = AssessmentRecord.objects.filter(student=obj).order_by('-conducted_date')
+        records = AssessmentRecord.objects.filter(student=obj).order_by('-conducted_date', '-id')
         return AssessmentRecordSerializer(records, many=True).data
 
     def get_announcements(self, obj):
-        from django.db.models import Q
         if obj.batch:
             records = Announcement.objects.filter(Q(batch=obj.batch) | Q(batch__isnull=True)).order_by('-created_at')[:8]
         else:
